@@ -22,10 +22,30 @@ if (args.indexOf('record') !== -1) {
 }
 
 app.use(morgan('combined'))
+app.use(express.json())
 
 routing.forEach(r => {
     console.log(`Build routing for ${r.target}`)
-    app.get(`/${r.pathPrefix}/*`, (req, res) => {
+    let path = `/${r.pathPrefix}/*`
+    app.post(path, (req, res) => {
+        let url = r.target + req.url.replace(`/${r.pathPrefix}`, '')
+        console.log(`POST ${url}`)
+        let body = JSON.stringify(req.body)
+        console.log(`WITH BODY: ${body}`)
+        if (mockMode) {
+            try {
+                console.log('Looking for a local ')
+                var content = mockResponse(req, 'POST')
+                res.set(content.headers).status(200).send(content.body)
+            } catch (error) {
+                console.log('Error: ', error)
+                res.status(403).send()
+            }
+        } else {
+            res.status(200).send()
+        }
+    })
+    app.get(path, (req, res) => {
         let url = r.target + req.url.replace(`/${r.pathPrefix}`, '')
         if (mockMode) {
             try {
